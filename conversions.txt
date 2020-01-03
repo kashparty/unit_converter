@@ -1,0 +1,28 @@
+feet-metres: 0.3048
+miles-feet: 5280
+miles-yards: 1760
+meters-yards: 1.09361
+meters-centimeters: 100
+kilometers-feet: 3280.84
+centimeters-inches: 0.393701
+feet-inches: 12
+metres = meters
+kilometres = kilometers
+centimetres = centimeters
+
+minutes-seconds: 60
+hours-minutes: 60
+days-hours: 24
+years-days: 365
+
+kilograms-pounds: 2.20462
+kilograms-ounces: 35.274
+kilograms-grams: 1000
+tons-kilograms: 907.185
+tons-tonnes: 0.907185
+
+kilocalories-calories: 1000
+kilocalories-joules: 4184
+kilojoules-joules: 1000
+watts = joules/seconds
+kilowatts = kilojoules/seconds
