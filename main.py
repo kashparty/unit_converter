@@ -14,12 +14,14 @@ def convert(input_value, input_unit, output_unit, conversion_table):
                 if unit == key[0] and key[1] not in units_visited:
                     new_units.append(key[1])
                     units_visited.append(key[1])
-                    paths[unit] = new_units
+                    if unit not in paths.keys():
+                        paths[unit] = [key[1]]
+                    else:
+                        paths[unit].append(key[1])
 
 
             if output_unit in units_visited:
                 # Conversion is possible
-
                 final_path = [output_unit]
                 to_unit = output_unit
                 while to_unit not in paths[input_unit]:
@@ -69,6 +71,7 @@ all_units = list(zip(*conversion_table.keys()))[0] # Lists at indexes 0 and 1 ar
 [input_value, original_input_unit, _, original_output_unit] = input(
     "Enter conversion in format \"{NUMBER} {INPUT_UNIT} to {OUTPUT_UNIT}\" (e.g. 2 meters to feet): ").split(" ")
 
+# Replacements e.g. watts -> joules/seconds
 if original_input_unit in replacements.keys():
     input_unit = replacements[original_input_unit]
 else:
@@ -88,10 +91,24 @@ else:
         # Complex conversion!
         [upper_input_unit, lower_input_unit] = input_unit.split("/")
         [upper_output_unit, lower_output_unit] = output_unit.split("/")
+
+        # Replacements e.g. kilometres -> kilometers
+        if upper_input_unit in replacements.keys():
+            upper_input_unit = replacements[upper_input_unit]
+
+        if lower_input_unit in replacements.keys():
+            lower_input_unit = replacements[lower_input_unit]
+
+        if upper_output_unit in replacements.keys():
+            upper_output_unit = replacements[upper_output_unit]
+
+        if lower_output_unit in replacements.keys():
+            lower_output_unit = replacements[lower_output_unit]
+
         upper_input_value = input_value
         lower_input_value = 1
 
-        # If a unit isn't defined in the conversions table and it's different for input and output quit.
+        # If a unit isn't defined in the conversions table and it's different for input and output, quit.
         # However, if a unit isn't defined but it's the same for input and output, continue.
         if upper_input_unit not in all_units:
             if upper_input_unit != upper_output_unit:
@@ -100,9 +117,10 @@ else:
         elif upper_output_unit not in all_units:
             print(f"{upper_output_unit} is an unkwown unit. Use the exact name specified in the conversions file.")
             quit()
+
         if lower_input_unit not in all_units:
             if lower_input_unit != lower_output_unit:
-                print(f"{lower_input_unit} is an unkwown unit.Use the exact name specified in the conversions file.")
+                print(f"{lower_input_unit} is an unkwown unit. Use the exact name specified in the conversions file.")
                 quit()
         elif lower_output_unit not in all_units:
             print(f"{lower_output_unit} is an unkwown unit. Use the exact name specified in the conversions file.")
@@ -111,11 +129,29 @@ else:
         upper_output_value = convert(upper_input_value, upper_input_unit, upper_output_unit, conversion_table)
         lower_output_value = convert(lower_input_value, lower_input_unit, lower_output_unit, conversion_table)
 
+        # If conversion was successful, print answer. Otherwise, try flipped conversion.
         if upper_output_value[0] and lower_output_value[0]:
             print(f"\nAnswer: {upper_output_value[1] / lower_output_value[1]} {original_output_unit}")
         else:
-            print("Error: Conversion not possible.")
+            # Try swapping the numerator and denominator for flipped conversion
+            temp = upper_output_unit
+            upper_output_unit = lower_output_unit
+            lower_output_unit = temp
+
+            upper_output_value = convert(
+                upper_input_value, upper_input_unit, upper_output_unit, conversion_table)
+            lower_output_value = convert(
+                lower_input_value, lower_input_unit, lower_output_unit, conversion_table)
+
+            # If conversion was successful, print answer
+            if upper_output_value[0] and lower_output_value[0]:
+                print(
+                    f"\nAnswer: {lower_output_value[1] / upper_output_value[1]} {original_output_unit}")
+            else:
+                print("Error: Conversion not possible.")
+
     else:
+        # Simple conversion
         answer = convert(input_value, input_unit, output_unit, conversion_table)
 
         # If a unit isn't defined in the conversions table and it's different for input and output quit.
@@ -125,7 +161,9 @@ else:
             quit()
         if output_unit not in all_units:
             print(f"{output_unit} is an unkwown unit. Use the exact name specified in the conversions file.")
+            quit()
 
+        # If conversion was successful, print answer
         if answer[0]:
             print(f"\nAnswer: {answer[1]} {original_output_unit}")
         else:
