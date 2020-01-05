@@ -26,3 +26,6 @@ kilocalories-joules: 4184
 kilojoules-joules: 1000
 watts = joules/seconds
 kilowatts = kilojoules/seconds
+
+electrons-coulombs: 1.602176634e-19
+amperes = coulombs/seconds
