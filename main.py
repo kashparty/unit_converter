@@ -1,51 +1,45 @@
-def convert(input_value, input_unit, output_unit, conversion_table):
-    if input_unit == output_unit:
-        return (True, input_value)
+def find_penultimate_conversion(input_unit, output_unit, conversion_table):
+    units_to_explore = [input_unit]
+    units_explored = []
 
-    # First find conversion path
-    units_visited = [input_unit]
-    current_units = [input_unit]
-    new_units = []
-    paths = {}
+    while output_unit not in units_explored:
+        while len(units_to_explore) > 0:
+            unit_to_explore = units_to_explore[0]
 
-    while len(current_units) > 0:
-        for unit in current_units:
-            for key in conversion_table.keys():
-                if unit == key[0] and key[1] not in units_visited:
-                    new_units.append(key[1])
-                    units_visited.append(key[1])
-                    if unit not in paths.keys():
-                        paths[unit] = [key[1]]
+            units_explored.append(unit_to_explore)
+            units_to_explore.pop(0)
+            for conversion in conversion_table.keys():
+                if conversion[0] == unit_to_explore and conversion[1] not in units_explored:
+                    if output_unit == conversion[1]:
+                        return (True, conversion[0])
                     else:
-                        paths[unit].append(key[1])
+                        units_to_explore.append(conversion[1])
 
+            if len(units_to_explore) == 0:
+                return (False, None)
 
-            if output_unit in units_visited:
-                # Conversion is possible
-                final_path = [output_unit]
-                to_unit = output_unit
-                while to_unit not in paths[input_unit]:
-                    for key in paths.keys():
-                        if to_unit in paths[key]:
-                            final_path.insert(0, key)
-                            to_unit = key
+def convert(value, input_unit, output_unit, conversion_table):
+    if input_unit == output_unit:
+        return (True, value)
 
-                output = f"Converting {input_value} {input_unit}"
-                current_value = input_value
-                current_unit = input_unit
-                for next_unit in final_path:
-                    output += f" --> {next_unit}"
-                    current_value *= conversion_table[(current_unit, next_unit)]
-                    current_unit = next_unit
+    target_unit = output_unit
+    path = []
+    while target_unit != input_unit:
+        path.insert(0, target_unit)
+        result = find_penultimate_conversion(input_unit, target_unit, conversion_table)
+        target_unit = result[1]
+        if result[0] == False:
+            return (False, None)
 
-                print(
-                    output + f"... {input_value} {input_unit} = {current_value} {output_unit}")
-                return (True, current_value)
+    print(f"\n{value} {input_unit}")
 
-        current_units = new_units
-        new_units = []
+    current_unit = input_unit
+    for next_unit in path:
+        value *= conversion_table[(current_unit, next_unit)]
+        print(f" = {value} {next_unit}")
+        current_unit = next_unit
 
-    return (False, None)
+    return (True, value)
 
 
 conversion_table = {}
@@ -72,15 +66,8 @@ all_units = list(zip(*conversion_table.keys()))[0] # Lists at indexes 0 and 1 ar
     "Enter conversion in format \"{NUMBER} {INPUT_UNIT} to {OUTPUT_UNIT}\" (e.g. 2 meters to feet): ").split(" ")
 
 # Replacements e.g. watts -> joules/seconds
-if original_input_unit in replacements.keys():
-    input_unit = replacements[original_input_unit]
-else:
-    input_unit = original_input_unit
-
-if original_output_unit in replacements.keys():
-    output_unit = replacements[original_output_unit]
-else:
-    output_unit = original_output_unit
+input_unit = replacements.setdefault(original_input_unit, original_input_unit)
+output_unit = replacements.setdefault(original_output_unit, original_output_unit)
 
 try:
     input_value = float(input_value)
@@ -93,17 +80,10 @@ else:
         [upper_output_unit, lower_output_unit] = output_unit.split("/")
 
         # Replacements e.g. kilometres -> kilometers
-        if upper_input_unit in replacements.keys():
-            upper_input_unit = replacements[upper_input_unit]
-
-        if lower_input_unit in replacements.keys():
-            lower_input_unit = replacements[lower_input_unit]
-
-        if upper_output_unit in replacements.keys():
-            upper_output_unit = replacements[upper_output_unit]
-
-        if lower_output_unit in replacements.keys():
-            lower_output_unit = replacements[lower_output_unit]
+        upper_input_unit = replacements.setdefault(upper_input_unit, upper_input_unit)
+        lower_input_unit = replacements.setdefault(lower_input_unit, lower_input_unit)
+        upper_output_unit = replacements.setdefault(upper_output_unit, upper_output_unit)
+        lower_output_unit = replacements.setdefault(lower_output_unit, lower_output_unit)
 
         upper_input_value = input_value
         lower_input_value = 1
@@ -152,7 +132,6 @@ else:
 
     else:
         # Simple conversion
-        answer = convert(input_value, input_unit, output_unit, conversion_table)
 
         # If a unit isn't defined in the conversions table and it's different for input and output quit.
         # However, if a unit isn't defined but it's the same for input and output, continue.
@@ -162,6 +141,8 @@ else:
         if output_unit not in all_units:
             print(f"{output_unit} is an unkwown unit. Use the exact name specified in the conversions file.")
             quit()
+
+        answer = convert(input_value, input_unit, output_unit, conversion_table)
 
         # If conversion was successful, print answer
         if answer[0]:
